@@ -1,0 +1,381 @@
+<!DOCTYPE html>
+<html>
+<head>
+
+  <base target="_top">
+
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+
+  <title>CBT SMKN 1 KUOK</title>
+
+<style>
+
+body{
+  margin:0;
+  font-family:Arial;
+  background:#f1f5f9;
+}
+
+.header{
+  background:#1e40af;
+  color:white;
+  padding:20px;
+  text-align:center;
+  font-size:22px;
+  font-weight:bold;
+}
+
+.login-box{
+
+  max-width:400px;
+  margin:auto;
+  margin-top:50px;
+  background:white;
+  padding:30px;
+  border-radius:10px;
+  box-shadow:0 0 10px rgba(0,0,0,0.2);
+
+}
+
+input,select,button{
+
+  width:100%;
+  padding:12px;
+  margin-top:10px;
+  border-radius:8px;
+  border:1px solid #ccc;
+  box-sizing:border-box;
+
+}
+
+button{
+
+  background:#2563eb;
+  color:white;
+  border:none;
+  font-weight:bold;
+
+}
+
+.dashboard{
+
+  display:none;
+  padding:20px;
+
+}
+
+.menu{
+
+  background:white;
+  padding:20px;
+  border-radius:10px;
+  margin-bottom:15px;
+
+}
+
+.soal{
+
+  background:white;
+  padding:20px;
+  margin-top:20px;
+  border-radius:10px;
+
+}
+
+</style>
+
+</head>
+
+<body>
+
+<div class="header">
+
+SMKN 1 KUOK CBT ONLINE
+
+</div>
+
+<div class="login-box" id="loginPage">
+
+<h2>LOGIN CBT</h2>
+
+<select id="role">
+
+<option value="admin">ADMIN</option>
+<option value="guru">GURU</option>
+<option value="peserta">PESERTA</option>
+
+</select>
+
+<input type="text" id="username" placeholder="Username">
+
+<input type="password" id="password" placeholder="Password">
+
+<button onclick="login()">LOGIN</button>
+
+</div>
+
+<div class="dashboard" id="dashboard">
+
+<h2 id="judul"></h2>
+
+<div id="menuArea"></div>
+
+</div>
+
+<script>
+
+let currentUser = null;
+
+// ================= LOGIN =================
+
+function login(){
+
+  const username =
+  document.getElementById("username").value;
+
+  const password =
+  document.getElementById("password").value;
+
+  const role =
+  document.getElementById("role").value;
+
+  google.script.run
+  .withSuccessHandler(function(res){
+
+    if(res.status){
+
+      currentUser = res;
+
+      document.getElementById("loginPage").style.display="none";
+
+      document.getElementById("dashboard").style.display="block";
+
+      loadDashboard(role);
+
+    }else{
+
+      alert("LOGIN GAGAL");
+
+    }
+
+  }).login(username,password,role);
+
+}
+
+// ================= DASHBOARD =================
+
+function loadDashboard(role){
+
+  if(role == "admin"){
+
+    document.getElementById("judul").innerHTML =
+    "DASHBOARD ADMIN";
+
+    document.getElementById("menuArea").innerHTML = `
+
+      <div class='menu'>DATA PESERTA</div>
+
+      <div class='menu'>DATA GURU</div>
+
+      <div class='menu'>INPUT SOAL</div>
+
+      <div class='menu'>JADWAL UJIAN</div>
+
+      <div class='menu'>REKAP NILAI</div>
+
+      <div class='menu'>MONITORING</div>
+
+    `;
+
+  }
+
+  if(role == "guru"){
+
+    document.getElementById("judul").innerHTML =
+    "DASHBOARD GURU";
+
+    document.getElementById("menuArea").innerHTML = `
+
+      <div class='menu'>RUANG UJIAN</div>
+
+      <div class='menu'>JADWAL</div>
+
+      <div class='menu'>ABSENSI</div>
+
+      <div class='menu'>BERITA ACARA</div>
+
+    `;
+
+  }
+
+  if(role == "peserta"){
+
+    document.getElementById("judul").innerHTML =
+    "DASHBOARD PESERTA";
+
+    document.getElementById("menuArea").innerHTML = `
+
+      <div class='menu'>
+
+      <input type='text' id='mapel'
+      placeholder='Mapel'>
+
+      <input type='text' id='token'
+      placeholder='Token'>
+
+      <button onclick='mulaiUjian()'>
+      MULAI UJIAN
+      </button>
+
+      <div id='soalArea'></div>
+
+      </div>
+
+    `;
+
+  }
+
+}
+
+// ================= MULAI UJIAN =================
+
+function mulaiUjian(){
+
+  const mapel =
+  document.getElementById("mapel").value;
+
+  const token =
+  document.getElementById("token").value;
+
+  google.script.run
+  .withSuccessHandler(function(data){
+
+    tampilSoal(data,mapel);
+
+  }).getSoal(mapel,token);
+
+}
+
+// ================= TAMPIL SOAL =================
+
+function tampilSoal(data,mapel){
+
+  let html = "";
+
+  data.forEach(function(s,index){
+
+    html += `
+
+    <div class='soal'>
+
+    <h3>${index+1}. ${s[4]}</h3>
+
+    <label>
+    <input type='radio'
+    name='${index}' value='A'>
+    ${s[5]}
+    </label><br>
+
+    <label>
+    <input type='radio'
+    name='${index}' value='B'>
+    ${s[6]}
+    </label><br>
+
+    <label>
+    <input type='radio'
+    name='${index}' value='C'>
+    ${s[7]}
+    </label><br>
+
+    <label>
+    <input type='radio'
+    name='${index}' value='D'>
+    ${s[8]}
+    </label><br>
+
+    <label>
+    <input type='radio'
+    name='${index}' value='E'>
+    ${s[9]}
+    </label><br>
+
+    </div>
+
+    `;
+
+  });
+
+  html += `
+
+  <button onclick='selesaiUjian()'>
+
+  SELESAI UJIAN
+
+  </button>
+
+  `;
+
+  document.getElementById("soalArea").innerHTML = html;
+
+  keamanan();
+
+}
+
+// ================= KEAMANAN =================
+
+function keamanan(){
+
+  // blok klik kanan
+
+  document.addEventListener(
+    "contextmenu",
+    event => event.preventDefault()
+  );
+
+  // blok copy
+
+  document.addEventListener(
+    "copy",
+    event => event.preventDefault()
+  );
+
+  // pindah tab
+
+  document.addEventListener(
+    "visibilitychange",
+    function(){
+
+      if(document.hidden){
+
+        alert("Dilarang pindah tab");
+
+        google.script.run.savePelanggaran(
+          currentUser.data[0],
+          "UJIAN",
+          "PINDAH TAB"
+        );
+
+      }
+
+    }
+  );
+
+  // fullscreen
+
+  document.documentElement.requestFullscreen();
+
+}
+
+// ================= SELESAI =================
+
+function selesaiUjian(){
+
+  alert("UJIAN SELESAI");
+
+}
+
+</script>
+
+</body>
+</html>
